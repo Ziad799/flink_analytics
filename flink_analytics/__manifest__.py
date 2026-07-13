@@ -18,7 +18,7 @@ and PDF export.
     "author": "Elata79",
     "maintainer": "Elata79",
     "support": "ziadelata@gmail.com",
-    "website": "https://github.com/Ziad799/flink_analytics",
+    "website": "mailto:ziadelata@gmail.com",
     "license": "OPL-1",
     "price": 150,
     "currency": "USD",
