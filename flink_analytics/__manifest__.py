@@ -1,5 +1,5 @@
 {
-    "name": "Flink Analytics - AI Business Intelligence",
+    "name": "Flink Data Analytics - AI Business Intelligence",
     "version": "19.0.1.0.0",
     "category": "Productivity/Analytics",
     "summary": "One-click automated analytics on any Odoo model or uploaded file: "
