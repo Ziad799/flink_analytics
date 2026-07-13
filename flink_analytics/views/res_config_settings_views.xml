@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_flink" model="ir.ui.view">
+        <field name="name">res.config.settings.form.flink</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Flink Analytics" name="flink_analytics"
+                     logo="/flink_analytics/static/description/icon.png"
+                     groups="flink_analytics.group_flink_manager">
+                    <block title="AI Executive Briefings">
+
+                        <setting string="Enable AI briefings"
+                                 help="Opt-in. Only aggregate statistics are sent to the AI provider - never raw records.">
+                            <field name="flink_ai_enabled"/>
+                        </setting>
+
+                        <setting string="AI Provider"
+                                 invisible="not flink_ai_enabled"
+                                 help="Select which AI service to use for generating executive briefings.">
+                            <field name="flink_ai_provider" widget="radio"
+                                   options="{'horizontal': true}"/>
+                        </setting>
+
+                        <!-- Anthropic -->
+                        <setting string="Anthropic (Claude)"
+                                 invisible="not flink_ai_enabled or flink_ai_provider != 'anthropic'">
+                            <div class="row">
+                                <label for="flink_anthropic_api_key" class="col-lg-4 col-form-label"/>
+                                <field name="flink_anthropic_api_key" password="True"
+                                       placeholder="sk-ant-..."/>
+                            </div>
+                            <div class="row mt-2">
+                                <label for="flink_anthropic_model" class="col-lg-4 col-form-label"/>
+                                <field name="flink_anthropic_model"
+                                       placeholder="claude-sonnet-5"/>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                Models: claude-sonnet-5, claude-opus-4-8, claude-haiku-4-5-20251001
+                            </div>
+                        </setting>
+
+                        <!-- OpenAI -->
+                        <setting string="OpenAI (GPT)"
+                                 invisible="not flink_ai_enabled or flink_ai_provider != 'openai'">
+                            <div class="row">
+                                <label for="flink_openai_api_key" class="col-lg-4 col-form-label"/>
+                                <field name="flink_openai_api_key" password="True"
+                                       placeholder="sk-..."/>
+                            </div>
+                            <div class="row mt-2">
+                                <label for="flink_openai_model" class="col-lg-4 col-form-label"/>
+                                <field name="flink_openai_model"
+                                       placeholder="gpt-4o"/>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                Models: gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-3.5-turbo
+                            </div>
+                        </setting>
+
+                        <!-- Gemini -->
+                        <setting string="Google (Gemini)"
+                                 invisible="not flink_ai_enabled or flink_ai_provider != 'gemini'">
+                            <div class="row">
+                                <label for="flink_gemini_api_key" class="col-lg-4 col-form-label"/>
+                                <field name="flink_gemini_api_key" password="True"
+                                       placeholder="AIza..."/>
+                            </div>
+                            <div class="row mt-2">
+                                <label for="flink_gemini_model" class="col-lg-4 col-form-label"/>
+                                <field name="flink_gemini_model"
+                                       placeholder="gemini-2.0-flash"/>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                Models: gemini-2.0-flash, gemini-1.5-pro, gemini-1.5-flash
+                            </div>
+                        </setting>
+
+                        <!-- Mistral -->
+                        <setting string="Mistral AI"
+                                 invisible="not flink_ai_enabled or flink_ai_provider != 'mistral'">
+                            <div class="row">
+                                <label for="flink_mistral_api_key" class="col-lg-4 col-form-label"/>
+                                <field name="flink_mistral_api_key" password="True"
+                                       placeholder="..."/>
+                            </div>
+                            <div class="row mt-2">
+                                <label for="flink_mistral_model" class="col-lg-4 col-form-label"/>
+                                <field name="flink_mistral_model"
+                                       placeholder="mistral-large-latest"/>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                Models: mistral-large-latest, mistral-small-latest, open-mixtral-8x22b
+                            </div>
+                        </setting>
+
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

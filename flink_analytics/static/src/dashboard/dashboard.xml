@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<t t-name="flink_analytics.Dashboard">
+    <div class="o_flink_dashboard" t-ref="root">
+        <div t-if="state.loading" class="o_flink_center">
+            <i class="fa fa-spinner fa-spin fa-2x"/>
+        </div>
+        <div t-elif="state.error" class="alert alert-danger m-4" t-esc="state.error"/>
+        <div t-elif="!datasetKeys.length" class="alert alert-info m-4">
+            No results yet - run the analysis first.
+        </div>
+        <t t-else="">
+            <div class="o_flink_header">
+                <h2 t-esc="state.data.name"/>
+                <div class="o_flink_tabs" t-if="datasetKeys.length > 1">
+                    <button t-foreach="datasetKeys" t-as="key" t-key="key"
+                            class="btn btn-sm"
+                            t-att-class="key === state.activeTab ? 'btn-primary' : 'btn-outline-primary'"
+                            t-on-click="() => this.selectTab(key)"
+                            t-esc="key"/>
+                </div>
+            </div>
+
+            <t t-set="r" t-value="result"/>
+            <t t-if="r">
+                <!-- KPI row -->
+                <div class="o_flink_kpis">
+                    <div class="o_flink_kpi">
+                        <div class="o_flink_kpi_value" t-esc="fmt(r.profile.rows)"/>
+                        <div class="o_flink_kpi_label">Rows</div>
+                    </div>
+                    <div class="o_flink_kpi">
+                        <div class="o_flink_kpi_value" t-esc="r.profile.cols"/>
+                        <div class="o_flink_kpi_label">Columns</div>
+                    </div>
+                    <div class="o_flink_kpi">
+                        <div class="o_flink_kpi_value"
+                             t-att-class="qualityClass(r.profile.quality_score)">
+                            <t t-esc="r.profile.quality_score"/><small>/100</small>
+                        </div>
+                        <div class="o_flink_kpi_label">Data quality</div>
+                    </div>
+                    <div class="o_flink_kpi">
+                        <div class="o_flink_kpi_value" t-esc="(r.anomalies.by_column || []).length"/>
+                        <div class="o_flink_kpi_label">Columns w/ outliers</div>
+                    </div>
+                    <div class="o_flink_kpi" t-if="r.segments">
+                        <div class="o_flink_kpi_value" t-esc="r.segments.k"/>
+                        <div class="o_flink_kpi_label">Segments</div>
+                    </div>
+                </div>
+
+                <!-- Key findings -->
+                <div class="o_flink_card">
+                    <h4><i class="fa fa-lightbulb-o me-2"/>Key findings</h4>
+                    <ul class="o_flink_findings">
+                        <li t-foreach="r.key_findings || []" t-as="f" t-key="f_index" t-esc="f"/>
+                    </ul>
+                </div>
+
+                <div class="o_flink_grid">
+                    <!-- Trends -->
+                    <div class="o_flink_card" t-if="(r.time_trends || []).length">
+                        <h4><i class="fa fa-line-chart me-2"/>Trends over time</h4>
+                        <div t-foreach="r.time_trends" t-as="t" t-key="t_index" class="mb-3">
+                            <div class="o_flink_chart_title">
+                                <t t-esc="t.value_column"/> by <t t-esc="t.date_column"/>
+                                <span t-att-class="t.direction === 'up' ? 'text-success' : (t.direction === 'down' ? 'text-danger' : 'text-muted')">
+                                    (<t t-esc="t.direction"/> <t t-esc="t.trend_pct_per_period"/>%/period)
+                                </span>
+                            </div>
+                            <div class="o_flink_chart_box" t-if="hasCharts">
+                                <canvas t-att-id="'flink-trend-' + t_index"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="o_flink_card" t-if="(r.categorical_breakdowns || []).length">
+                        <h4><i class="fa fa-bar-chart me-2"/>Category breakdowns</h4>
+                        <div t-foreach="r.categorical_breakdowns" t-as="c" t-key="c_index" class="mb-3">
+                            <div class="o_flink_chart_title" t-esc="c.column"/>
+                            <div class="o_flink_chart_box" t-if="hasCharts">
+                                <canvas t-att-id="'flink-cat-' + c_index"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Correlations -->
+                    <div class="o_flink_card" t-if="(r.correlations.pairs || []).length">
+                        <h4><i class="fa fa-link me-2"/>Correlations</h4>
+                        <table class="table table-sm">
+                            <thead><tr><th>A</th><th>B</th><th>r</th><th></th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="r.correlations.pairs" t-as="p" t-key="p_index">
+                                    <td t-esc="p.a"/><td t-esc="p.b"/>
+                                    <td><span class="badge"
+                                        t-att-class="p.strength === 'strong' ? 'text-bg-primary' : 'text-bg-secondary'"
+                                        t-esc="p.r"/></td>
+                                    <td class="text-muted"><t t-esc="p.strength"/> <t t-esc="p.direction"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Anomalies -->
+                    <div class="o_flink_card" t-if="(r.anomalies.by_column || []).length or r.anomalies.multivariate">
+                        <h4><i class="fa fa-exclamation-triangle me-2"/>Anomalies</h4>
+                        <table class="table table-sm" t-if="(r.anomalies.by_column || []).length">
+                            <thead><tr><th>Column</th><th>Outliers</th><th>%</th><th>Normal range</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="r.anomalies.by_column" t-as="a" t-key="a_index">
+                                    <td t-esc="a.column"/><td t-esc="a.count"/><td t-esc="a.pct"/>
+                                    <td class="text-muted"><t t-esc="fmt(a.lower_bound)"/> - <t t-esc="fmt(a.upper_bound)"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div t-if="r.anomalies.multivariate" class="alert alert-warning py-2">
+                            Multivariate scan flagged
+                            <strong t-esc="r.anomalies.multivariate.count"/> unusual records
+                            (<t t-esc="r.anomalies.multivariate.pct"/>%).
+                        </div>
+                    </div>
+
+                    <!-- Segments -->
+                    <div class="o_flink_card" t-if="r.segments">
+                        <h4><i class="fa fa-users me-2"/>Segments</h4>
+                        <table class="table table-sm">
+                            <thead><tr><th>#</th><th>Size</th><th>%</th><th>Distinctive traits</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="r.segments.profiles" t-as="s" t-key="s_index">
+                                    <td t-esc="s.segment"/><td t-esc="fmt(s.size)"/><td t-esc="s.pct"/>
+                                    <td class="text-muted" t-esc="(s.distinctive_traits || []).join(', ')"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Forecast -->
+                    <div class="o_flink_card o_flink_card_wide">
+                        <h4><i class="fa fa-magic me-2"/>Forecast</h4>
+                        <div class="o_flink_forecast_form">
+                            <select class="form-select form-select-sm" t-model="state.fc.date_col">
+                                <option value="">Date column...</option>
+                                <option t-foreach="dateColumns" t-as="c" t-key="c" t-att-value="c" t-esc="c"/>
+                            </select>
+                            <select class="form-select form-select-sm" t-model="state.fc.value_col">
+                                <option value="">Value column...</option>
+                                <option t-foreach="numericColumns" t-as="c" t-key="c" t-att-value="c" t-esc="c"/>
+                            </select>
+                            <input type="number" class="form-control form-control-sm"
+                                   t-model="state.fc.periods" min="2" max="60" title="Periods ahead"/>
+                            <button class="btn btn-primary btn-sm" t-on-click="runForecast"
+                                    t-att-disabled="state.forecastLoading">
+                                <i t-if="state.forecastLoading" class="fa fa-spinner fa-spin me-1"/>Run forecast
+                            </button>
+                        </div>
+                        <t t-if="state.forecast">
+                            <div class="text-muted small mb-2">
+                                Method: <t t-esc="state.forecast.method"/> |
+                                frequency <t t-esc="state.forecast.freq"/> |
+                                trend <t t-esc="state.forecast.trend_direction"/> |
+                                in-sample error ~<t t-esc="state.forecast.in_sample_error_pct"/>%
+                            </div>
+                            <div class="o_flink_chart_box o_flink_chart_tall" t-if="hasCharts">
+                                <canvas id="flink-forecast-chart"/>
+                            </div>
+                        </t>
+                    </div>
+
+                    <!-- AI narrative -->
+                    <div class="o_flink_card o_flink_card_wide" t-if="state.data.ai_narrative">
+                        <h4><i class="fa fa-comment-o me-2"/>AI Executive Briefing</h4>
+                        <pre class="o_flink_ai" t-esc="state.data.ai_narrative"/>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </div>
+</t>
+
+</templates>

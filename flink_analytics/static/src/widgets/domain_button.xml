@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="flink_analytics.DomainButtonField">
+        <div class="fa-domain-btn-field d-flex align-items-center gap-1">
+            <button
+                class="btn btn-sm"
+                t-att-class="{ 'btn-outline-secondary': !hasFilter, 'btn-primary': hasFilter }"
+                t-att-disabled="!resModel or props.readonly"
+                t-att-title="!resModel ? 'Select a model first' : 'Click to set filter'"
+                t-on-click="openDialog"
+            >
+                <i t-att-class="hasFilter ? 'fa fa-filter me-1' : 'fa fa-plus me-1'"/>
+                <t t-esc="label"/>
+            </button>
+            <button
+                t-if="hasFilter and !props.readonly"
+                class="btn btn-sm btn-link text-danger p-0"
+                title="Clear filter"
+                t-on-click="clearDomain"
+            >
+                <i class="fa fa-times"/>
+            </button>
+        </div>
+    </t>
+
+</templates>

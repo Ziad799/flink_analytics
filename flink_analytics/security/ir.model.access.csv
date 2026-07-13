@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_flink_analysis_user,flink.analysis user,model_flink_analysis,group_flink_user,1,1,1,1
+access_flink_analysis_line_user,flink.analysis.model.line user,model_flink_analysis_model_line,group_flink_user,1,1,1,1

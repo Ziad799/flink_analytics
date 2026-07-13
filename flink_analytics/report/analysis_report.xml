@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_flink_analysis" model="ir.actions.report">
+        <field name="name">Analytics Report</field>
+        <field name="model">flink.analysis</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">flink_analytics.report_analysis</field>
+        <field name="report_file">flink_analytics.report_analysis</field>
+        <field name="binding_model_id" ref="model_flink_analysis"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Analytics - %s' % (object.name)</field>
+    </record>
+
+    <template id="report_analysis">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <t t-set="data" t-value="doc.get_report_data()"/>
+                        <h2 t-esc="doc.name"/>
+                        <p class="text-muted">
+                            Analyzed on <span t-field="doc.analyzed_on"/> by
+                            <span t-field="doc.user_id"/>
+                        </p>
+
+                        <t t-foreach="data.items()" t-as="entry">
+                            <t t-set="label" t-value="entry[0]"/>
+                            <t t-set="a" t-value="entry[1]"/>
+                            <h3 t-esc="label" style="margin-top:24px;"/>
+
+                            <t t-set="p" t-value="a.get('profile', {})"/>
+                            <table class="table table-sm table-bordered" style="width:60%;">
+                                <tr><td><strong>Rows</strong></td><td t-esc="'{:,}'.format(p.get('rows', 0))"/></tr>
+                                <tr><td><strong>Columns</strong></td><td t-esc="p.get('cols')"/></tr>
+                                <tr><td><strong>Data quality score</strong></td><td><t t-esc="p.get('quality_score')"/> / 100</td></tr>
+                                <tr><td><strong>Duplicated rows</strong></td><td t-esc="p.get('duplicated_rows')"/></tr>
+                            </table>
+
+                            <h4>Key findings</h4>
+                            <ul>
+                                <li t-foreach="a.get('key_findings', [])" t-as="f" t-esc="f"/>
+                            </ul>
+
+                            <t t-if="a.get('correlations', {}).get('pairs')">
+                                <h4>Top correlations</h4>
+                                <table class="table table-sm table-bordered">
+                                    <thead><tr><th>Metric A</th><th>Metric B</th><th>r</th><th>Strength</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="a['correlations']['pairs'][:8]" t-as="c">
+                                            <td t-esc="c['a']"/><td t-esc="c['b']"/>
+                                            <td t-esc="c['r']"/>
+                                            <td><t t-esc="c['strength']"/> <t t-esc="c['direction']"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <t t-if="a.get('anomalies', {}).get('by_column')">
+                                <h4>Anomalies</h4>
+                                <table class="table table-sm table-bordered">
+                                    <thead><tr><th>Column</th><th>Outliers</th><th>%</th><th>Normal range</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="a['anomalies']['by_column']" t-as="an">
+                                            <td t-esc="an['column']"/><td t-esc="an['count']"/>
+                                            <td t-esc="an['pct']"/>
+                                            <td><t t-esc="an['lower_bound']"/> - <t t-esc="an['upper_bound']"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <t t-if="a.get('segments')">
+                                <h4>Segments (<t t-esc="a['segments']['k']"/> groups)</h4>
+                                <table class="table table-sm table-bordered">
+                                    <thead><tr><th>Segment</th><th>Size</th><th>%</th><th>Distinctive traits</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="a['segments']['profiles']" t-as="s">
+                                            <td>#<t t-esc="s['segment']"/></td>
+                                            <td t-esc="s['size']"/><td t-esc="s['pct']"/>
+                                            <td t-esc="', '.join(s['distinctive_traits'])"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </t>
+                        </t>
+
+                        <t t-if="doc.ai_narrative">
+                            <h3 style="margin-top:24px;">AI Executive Briefing</h3>
+                            <p style="white-space:pre-wrap;" t-esc="doc.ai_narrative"/>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

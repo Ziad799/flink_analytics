@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_flink_analysis_list" model="ir.ui.view">
+        <field name="name">flink.analysis.list</field>
+        <field name="model">flink.analysis</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="source_type"/>
+                <field name="user_id" widget="many2one_avatar_user"/>
+                <field name="analyzed_on"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'done'"
+                       decoration-danger="state == 'error'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_flink_analysis_form" model="ir.ui.view">
+        <field name="name">flink.analysis.form</field>
+        <field name="model">flink.analysis</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_run_analysis" type="object"
+                            string="Run Full Analysis" class="btn-primary"/>
+                    <button name="action_open_dashboard" type="object"
+                            string="Open Dashboard" class="btn-secondary"
+                            invisible="state != 'done'"/>
+                    <button name="action_generate_ai" type="object"
+                            string="Generate AI Briefing" class="btn-secondary"
+                            invisible="state != 'done'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="e.g. Q3 Sales Deep-Dive"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="source_type" widget="radio" options="{'horizontal': true}"/>
+                            <field name="user_id"/>
+                        </group>
+                        <group>
+                            <field name="file_name" invisible="source_type != 'file'"/>
+                            <field name="file_data" filename="file_name"
+                                   invisible="source_type != 'file'"/>
+                            <field name="analyzed_on" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Models" name="models"
+                              invisible="source_type != 'model'">
+                            <field name="line_ids">
+                                <list editable="bottom">
+                                    <field name="model_id"/>
+                                    <field name="model_name" column_invisible="1"/>
+                                    <field name="field_ids" widget="many2many_tags"
+                                           optional="show"/>
+                                    <field name="domain" widget="domain_button"/>
+                                    <field name="limit"/>
+                                </list>
+                            </field>
+                            <div class="text-muted mt-2">
+                                Leave Fields empty to auto-select all analyzable columns.
+                                Access rights and record rules of the current user are
+                                always enforced when reading model data.
+                            </div>
+                        </page>
+                        <page string="Key Findings" name="findings"
+                              invisible="state != 'done'">
+                            <field name="findings_preview" readonly="1"/>
+                        </page>
+                        <page string="AI Briefing" name="ai"
+                              invisible="not ai_narrative">
+                            <field name="ai_narrative" readonly="1"/>
+                        </page>
+                        <page string="Error" name="error"
+                              invisible="state != 'error'">
+                            <field name="error_message" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_flink_analysis" model="ir.actions.act_window">
+        <field name="name">Analyses</field>
+        <field name="res_model">flink.analysis</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create your first analysis</p>
+            <p>Pick one or more Odoo models - or upload a CSV/Excel/JSON file -
+               and get automated profiling, trends, correlations, anomalies,
+               segmentation and forecasts.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_flink_root" name="Flink Analytics"
+              web_icon="flink_analytics,static/description/icon.png"
+              sequence="55"/>
+    <menuitem id="menu_flink_analyses" name="Analyses"
+              parent="menu_flink_root" action="action_flink_analysis" sequence="10"/>
+</odoo>
